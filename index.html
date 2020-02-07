@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Battery Game</title>
+</head>
+
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/3.5.0/fabric.min.js"></script>
+    <canvas id="canvas" width="1280" height="720" style="border:1px gray;"></canvas>
+
+    <script>
+        var mg;
+        var mg1;
+        var citric;
+        var coper;
+        var coper1;
+        var filter;
+        var filter1;
+        var rect;
+        var selectedId;
+        //var mgF;
+        var myComponents = [];
+        var updateArr = [];
+        var ConnectedLED = 'ConnectedLED';
+        var GlowingLED = 'GlowingLED';
+        var wrappedMg = 'wrappedMg';
+        var cell = 'cell';
+        var battery = 'battery'
+        var copper = 'copper'
+        var magnesium = 'magnesium'
+        var separator = 'filterPaper'
+        var LED = 'LED'
+        var citricAcid = 'citricAcid';
+        var plus = 'plus';
+        var iterator = 0;
+        var previouslyClicked;
+
+        var expectedArray = [magnesium, separator, copper, magnesium, separator, copper, cell, LED, citricAcid]
+
+        var canvas = new fabric.Canvas('canvas');
+
+        canvas.hoverCursor = 'pointer';
+        canvas.moveCursor = 'grab';
+        canvas.selection = false;
+
+        fabric.Canvas.prototype.getItemByName = function (name) {
+            var object = null,
+                objects = this.getObjects();
+
+            for (var i = 0, len = this.size(); i < len; i++) {
+                if (objects[i].customProp && objects[i].customProp.name === name) {
+                    object = objects[i];
+                    break;
+                }
+            }
+            return object;
+        };
+
+        fabric.Image.fromURL('BG.jpg', function (img) {
+            // img.width = canvas.width;
+            // img.height = canvas.height
+            // let can = canvas.getElement();
+            // can.setAttribute('height', img.height)
+            // can.setAttribute('width', img.width)
+
+            img.scaleToWidth(canvas.width);
+            // img.scaleToHeight(canvas.height);
+            canvas.setBackgroundImage(img);
+            canvas.requestRenderAll();
+        });
+
+        var txt = new fabric.Text(`Lets begin.. Drop magnesium on the work area`, {
+            textAlign: 'center',
+            fontSize: 20,
+            top: 670,
+            left: 444,
+            // shadow: 'black -5px -5px 5px',
+            selectable: false,
+            fill: 'white',
+            evented: false,
+
+        })
+        canvas.add(txt);
+        function updateText(text) {
+            canvas.item(0).set('text', text);
+        }
+
+        var workArea = new fabric.Rect({     //Strat rectangle drawing
+            top: canvas.height / 3 + canvas.height / 5,
+            left: canvas.width / 3,
+            width: 220 * 1.7,
+            height: 150 * 1.5,
+            hasBorder: true,
+            selectable: false,
+            draggable: false,
+            evented: false,
+
+            stroke: 'gray',
+            // shadow: 'black -5px -5px 13px',
+            strokeWidth: 2,
+            fill: 'transparent',
+            customProp: { contains: 'workArea', name: 'myWorkArea', isExpected: false }
+        });
+        canvas.add(workArea);
+
+        storageArea = new fabric.Rect({     //Strat rectangle drawing
+            top: 484,
+            left: 167,
+            hasBorder: true,
+            stroke: 'gray',
+            evented: false,
+
+            width: 180 * 1.2,
+            height: 100 * 1.2,
+            selectable: false,
+            fill: 'transparent',
+            customProp: { contains: 'storageArea', name: 'storageArea', isExpected: false }
+
+        });
+
+        canvas.add(storageArea);
+        // imageComponent(imgSrc, width, height, x, y, selectable, draggable, customProperty)
+
+        mg = imageComponent('magnesium.png', 8, 8, 984, 567, true, true, { contains: magnesium, name: 'mg', isExpected: true });
+        mg1 = imageComponent('magnesium.png', 8, 8, 1022, 593, true, true, { contains: magnesium, name: 'mg1', isExpected: true });
+        filter = imageComponent('filterPaper.png', 50, 45, 913, 432, true, true, { contains: separator, name: 'filter', isExpected: false });
+        filter1 = imageComponent('filterPaper.png', 50, 45, 975, 431, true, true, { contains: separator, name: 'filter1', isExpected: false });
+        coperStrip = imageComponent('coperStrip.png', 12, 12, 973, 534, true, true, { contains: copper, name: 'coperStrip', isExpected: false });
+        coperStrip1 = imageComponent('coperStrip.png', 12, 12, 945, 503, true, true, { contains: copper, name: 'coperStrip1', isExpected: false });
+        led = imageComponent('LED1.png', 100, 70, 862, 366, true, true, { contains: LED, name: 'led', isExpected: false });
+        citric = imageComponent('citricAcid.png', 100, 60, 947, 346, true, true, { contains: citricAcid, name: 'citric', isExpected: false });
+        plus = imageComponent('plus.png', 100, 20, 1010, 381, true, true, { contains: plus, name: 'plus', isExpected: false });
+
+        var shadow = {
+            color: '#888888',
+            blur: 70,
+            offsetX: 90,
+            offsetY: 90,
+            opacity: 0.8
+        }
+
+        function imageComponent(imgSrc, width, height, x, y, selectable, draggable, customProperty) {
+            customProperty.originalX = x;
+            customProperty.originalY = y;
+
+            let obj = new fabric.Image.fromURL(imgSrc, function (img) {
+                // img.scaleToWidth(width);
+                img.scaleToHeight(height);
+                img.left = x;
+                img.top = y;
+                img.selectable = selectable;
+                img.draggable = draggable;
+                img.customProp = { ...customProperty }
+                img.perPixelTargetFind = true;
+                img.isMoved = false;
+                img.hasControls = img.hasBorders = false;
+                img.setShadow(shadow);
+                canvas.add(img);
+                // canvas.renderAll();
+            })
+
+        }
+
+        function test(name) {
+            canvas.forEachObject(function (obj) {
+                if (obj.customProp) {
+                    // console.log(obj.customProp);
+                }
+            });
+        }
+
+        function growOnSelect(e, dir) {
+            let selectedObj = e.target;
+
+            if (selectedObj) {
+                // console.log(e.target);
+                selectedId = canvas.getObjects().indexOf(selectedObj);
+
+
+                fabric.util.animate({
+                    startValue: selectedObj.get('scaleX'),
+                    endValue: selectedObj.get('scaleX') + (dir ? 0.005 : -0.005),
+                    duration: 100,
+
+                    onChange: function (value) {
+                        selectedObj.scale(value);
+                        canvas.renderAll();
+                    },
+                    onComplete: function () {
+                        if (selectedObj.intersectsWithObject(canvas.item(1))) {
+                            markExpectation(selectedObj.customProp.contains, false);
+                            setMidPosition(selectedObj, canvas.item(1));
+                            canvas.renderAll();
+                        }
+                        selectedObj.setCoords();
+                    }
+                });
+            }
+        }
+
+        canvas.on('mouse:down', function (e) {
+            growOnSelect(e, 1);
+        });
+        canvas.on('mouse:up', function (e) {
+            growOnSelect(e, 0);
+            gameLogic(e.target);
+            // console.log(getTerminalCoords(e.target));
+            checkTerminalIntersection(e.target, 'coperStrip1')
+        });
+
+
+        function checkTerminalIntersection(obj, crashWithObj) {
+            if (obj) {
+                let k = getTerminalCoords(canvas.getItemByName(crashWithObj))
+                let selectedObj = canvas.item(canvas.getObjects().indexOf(obj));
+                let arg = [new fabric.Point(k[0].x, k[0].y), new fabric.Point(k[1].x, k[1].y)]
+                console.log(selectedObj.intersectsWithRect(...arg) || selectedObj.isContainedWithinRect(...arg))
+            }
+        }
+
+        function getTerminalCoords(obj) {
+            // return Math.round(obj.width * obj.scaleX) , Math.round
+
+            let k = obj.getCoords();
+            let objTl = k[0];
+            let objBr = k[2];
+
+            terminalTr = { x: Math.floor(objTl.x ), y: Math.floor(objTl.y) };
+            terminalBr = { x: Math.floor(objBr.x - obj.getScaledWidth() * 0.75), y: Math.floor(objBr.y) };
+
+            return [terminalTr, terminalBr];
+        }
+
+        function restorePosition(obj) {
+            obj.left = obj.customProp.originalX;
+            obj.top = obj.customProp.originalY;
+            // obj.image.src = obj.initialImage
+        }
+
+
+        function markExpectation(contain, val) {
+            canvas.forEachObject(obj => {
+                if (obj.customProp && obj.customProp.contains == contain) {
+                    obj.customProp.isExpected = val
+                }
+            })
+            canvas.renderAll();
+        }
+
+
+        function setMidPosition(obj, crashedWith) {
+            let midX = crashedWith.getCenterPoint().x;
+            let midY = crashedWith.getCenterPoint().y;
+            obj.set({
+                'top': midY,
+                'left': midX,
+                'originX': 'center',
+                'originY': 'center',
+            })
+            obj.setCoords();
+        }
+
+        function gameLogic(clickedObj) {
+
+            if (clickedObj) {
+                if (clickedObj.intersectsWithObject(canvas.getItemByName('myWorkArea'))) { //dragged object into work area
+
+                    // setMidPosition(clickedObj, myWorkArea);
+                    if (clickedObj.customProp && clickedObj.customProp.contains === expectedArray[iterator]) { //clicked expected object
+                        //     //logic area
+                        if (iterator < expectedArray.length) {
+                            markExpectation(expectedArray[iterator + 1], true);
+
+                            if (iterator === 0 || iterator === 3) {
+                                updateText(`Step ${iterator + 1}: Wrap the Magnesium strip with filter paper by dropping it over the game area.`);
+                                // log(clickedObj, previouslyClicked, expectedArray[iterator + 1])
+                            }
+
+                            else if (iterator !== 3) {
+                                log(clickedObj, previouslyClicked);
+                                clickedObj.isMoved = true;
+                            }
+                            else {
+                                updateText(`Step ${iterator + 1}: Drop magnesium on the work area.`);
+                            }
+                            previouslyClicked = clickedObj;
+                            iterator++;
+                            // }
+                        }
+                        else { // clicked object other than expected obj
+                            if (!clickedObj.isMoved) {
+                                restorePosition(clickedObj);
+                            }
+                        }
+                    }
+                    else if (clickedObj.intersectsWithObject(canvas.getItemByName('storageArea')) && iterator == 3) {
+                        setMidPosition(clickedObj, canvas.getItemByName('storageArea'));
+                        updateText(`Step ${iterator + 1}: Drop magnesium on the work area.`);
+                    }
+                    else { //clicked outside the work area
+                        restorePosition(clickedObj);
+                        if (!clickedObj.isMoved) {
+                            restorePosition(clickedObj);
+                        }
+                        else if (clickedObj.freeToMove) {
+                        }
+                        else {
+                            setMidPosition(clickedObj, canvas.getItemByName('myWorkArea'));
+                        }
+                    }
+                }
+
+            }
+            function setPreviousAttributes(curr, prev) {
+                curr.width = prev.width;
+                curr.height = prev.height;
+                curr.scaleX = prev.scaleX;
+                curr.scaleY = prev.scaleY;
+                // canvas.renderAll();
+                // curr = prev;
+
+            }
+            function updateImage(Img, src) {
+
+                var tmp = Img.getElement();
+                // var src = tmp.src;
+                tmp.setAttribute("src", src);
+                canvas.renderAll();
+                canvas.calcOffset();
+            }
+
+            function log(curr, prev) {
+                // if (iterator > 0) {
+
+                switch (prev.customProp.contains + curr.customProp.contains) {
+
+                    case magnesium + separator:
+                        canvas.remove(prev);
+                        setPreviousAttributes(curr, prev);
+
+                        updateImage(curr, 'mgFilterPaper.png');
+
+                        curr.scaleToHeight(984)
+
+                        updateText(`Step ${iterator + 1}: Drag a copper stip on to the Workarea to make a cell.`);
+                        break;
+
+                    case separator + copper:
+
+                        canvas.remove(prev);
+                        updateImage(curr, 'cell.png');
+
+                        curr.customProp.contains = cell;
+                        if (iterator == 2) {
+                            curr.freeToMove = true;
+                            updateText(`Step ${iterator + 1}: Drag the cell and place it on the left of Workarea.`);
+                        }
+                        else {
+                            updateText(`Step ${iterator + 1}: Drag the previously built cell into Workarea to connect it in series with the one in the work area.`);
+                        }
+                        break;
+
+
+                    case cell + cell:
+                        canvas.remove(prev);
+                        updateImage(curr, 'battery.png');
+                        curr.customProp.contains = battery;
+
+                        // curr.width = 170 * 25;
+                        curr.height = 30 * 15;
+                        // curr.scaleX = 0.063;
+                        // curr.scaleY = 0.063;
+                        // curr.scaleToHeight(prev.height)
+                        // canvas.renderAll();
+                        updateText(`Step ${iterator + 1}: Bring the LED closer to the battery to make electric connection.`)
+                        // checkTerminalIntersectionPolarity(curr, myLED)
+                        break;
+                    case battery + LED:
+
+                        canvas.remove(prev);
+                        updateImage(curr, 'ConnectedLED.png');
+                        curr.customProp.contains = ConnectedLED;
+                        curr.scaleToHeight(0.05)
+                        setPreviousAttributes(curr, prev);
+                        updateText(`Step ${iterator + 1}: Drop Citric Acid Solution on the battery to light the LED.`)
+                        // curr.height = 30 * 15;
+                        break;
+
+                    case ConnectedLED + citricAcid:
+                        setPreviousAttributes(curr, prev);
+                        updateImage(curr, 'GlowingLED.png');
+                        curr.customProp.contains = GlowingLED;
+                        canvas.remove(prev);
+                        curr.width = 170 * 30;
+                        curr.height = 30 * 30;
+                        updateText(`Congratulations! You have made a battery.`)
+                        break;
+                    default: break;
+                }
+            }
+        }
+
+
+    </script>
+</body>
+
+</html>
