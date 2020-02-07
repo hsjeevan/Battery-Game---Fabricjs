@@ -209,30 +209,67 @@
             growOnSelect(e, 0);
             gameLogic(e.target);
             // console.log(getTerminalCoords(e.target));
-            checkTerminalIntersection(e.target, 'coperStrip1')
+            checkTerminalIntersection(e.target, 'led')
+            // checkTerminalIntersection(e.target, 'coperStrip')
         });
 
 
         function checkTerminalIntersection(obj, crashWithObj) {
             if (obj) {
-                let k = getTerminalCoords(canvas.getItemByName(crashWithObj))
-                let selectedObj = canvas.item(canvas.getObjects().indexOf(obj));
-                let arg = [new fabric.Point(k[0].x, k[0].y), new fabric.Point(k[1].x, k[1].y)]
-                console.log(selectedObj.intersectsWithRect(...arg) || selectedObj.isContainedWithinRect(...arg))
+                let crashedObj = canvas.getItemByName(crashWithObj);
+                // console.log(  obj.customProp.contains )
+                let k = getTerminalCoords(crashedObj)
+                if (k && crashWithObj) {
+                    let selectedObj = canvas.item(canvas.getObjects().indexOf(obj));
+
+                    let arg = [new fabric.Point(k[0].x, k[0].y), new fabric.Point(k[1].x, k[1].y)]
+
+                    console.log(selectedObj.intersectsWithRect(...arg) || selectedObj.isContainedWithinRect(...arg));
+                    //     if (selectedObj.intersectsWithRect(...arg) || selectedObj.isContainedWithinRect(...arg)) {
+
+                    //         // crashedObj.originX = 'center';
+                    //         // crashedObj.originY = 'center'
+
+                    //         var text = new fabric.Text('+', {
+                    //             fontSize: 30,
+                    //             // originX: 'center',
+                    //             // originY: 'center'
+                    //         });
+                    //         var group = new fabric.Group([crashedObj, text], {
+                    //             // this: crashedObj,
+                    //             left: crashedObj.get('left'),
+                    //             top: crashedObj.get('top'),
+                    //             angle: 0,
+                    //             width: 100,
+                    //             height: 100,
+                    //             // hasBorder: true,
+                    //             // selectable: true,
+                    //             // draggable: true,
+                    //             evented: false,
+                    //         });
+                    //         canvas.remove(crashedObj)
+                    //         canvas.add(group);
+                    //     }
+                }
             }
         }
 
         function getTerminalCoords(obj) {
             // return Math.round(obj.width * obj.scaleX) , Math.round
-
-            let k = obj.getCoords();
-            let objTl = k[0];
-            let objBr = k[2];
-
-            terminalTr = { x: Math.floor(objTl.x ), y: Math.floor(objTl.y) };
-            terminalBr = { x: Math.floor(objBr.x - obj.getScaledWidth() * 0.75), y: Math.floor(objBr.y) };
-
-            return [terminalTr, terminalBr];
+            if (obj) {
+                let k = obj.getCoords();
+                let objTl = k[0];
+                let objBr = k[2];
+                if (obj.customProp.contains == led) {
+                    terminalTl = { x: Math.floor(objTl.x), y: Math.floor(objTl.y + obj.getScaledHeight() * 0.60) };
+                    terminalBr = { x: Math.floor(objBr.x - obj.getScaledWidth() * 0.70), y: Math.floor(objBr.y) };
+                }
+                else {
+                    terminalTl = { x: Math.floor(objTl.x), y: Math.floor(objTl.y) };
+                    terminalBr = { x: Math.floor(objBr.x - obj.getScaledWidth() * 0.75), y: Math.floor(objBr.y) };
+                }
+                return [terminalTl, terminalBr];
+            }
         }
 
         function restorePosition(obj) {
