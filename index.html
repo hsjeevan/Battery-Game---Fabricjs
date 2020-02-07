@@ -74,10 +74,12 @@
         });
 
         var txt = new fabric.Text(`Lets begin.. Drop magnesium on the work area`, {
+            originX: 'center',
+            originY: 'center',
             textAlign: 'center',
             fontSize: 20,
             top: 670,
-            left: 444,
+            left: canvas.width / 2,
             // shadow: 'black -5px -5px 5px',
             selectable: false,
             fill: 'white',
