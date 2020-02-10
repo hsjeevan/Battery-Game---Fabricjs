@@ -84,8 +84,8 @@
             selectable: false,
             fill: 'white',
             evented: false,
-
         })
+
         canvas.add(txt);
         function updateText(text) {
             canvas.item(0).set('text', text);
@@ -223,37 +223,51 @@
                 let crashedObj = canvas.getItemByName(crashWithObj);
                 // console.log(  obj.customProp.contains )
                 let k = getTerminalCoords(crashedObj)
-                if (k && crashWithObj) {
+                if (k && crashedObj) {
                     let selectedObj = canvas.item(canvas.getObjects().indexOf(obj));
 
                     let arg = [new fabric.Point(k[0].x, k[0].y), new fabric.Point(k[1].x, k[1].y)]
 
                     console.log(selectedObj.intersectsWithRect(...arg) || selectedObj.isContainedWithinRect(...arg));
-                    //     if (selectedObj.intersectsWithRect(...arg) || selectedObj.isContainedWithinRect(...arg)) {
+                    if (selectedObj.intersectsWithRect(...arg) || selectedObj.isContainedWithinRect(...arg)) {
 
-                    //         // crashedObj.originX = 'center';
-                    //         // crashedObj.originY = 'center'
+                        crashedObj.originX = 'center';
+                        crashedObj.originY = 'center';
+                        // crashedObj.scaleToWidth(1);
+                        crashedObj.scaleToHeight(70)
+                        var text = new fabric.Text('+', {
+                            fontSize: 30,
+                            originX: 'center',
+                            originY: 'center',
+                            // top: 300,
+                        });
+                        var text2 = new fabric.Text('----', {
+                            fontSize: 30,
+                            originX: 'center',
+                            originY: 'center',
+                            // top: 300,
+                        });
+                        var group = new fabric.Group([text], {
+                            left: crashedObj.get('left'),
+                            top: crashedObj.get('top'),
+                            originX: 'right',
+                            width: crashedObj.get('width'),
+                            height: crashedObj.get('height'),
+                            
+                            // customProp : crashedObj.customProp,
+                            width: 50,
+                            height: 50,
+                            hasControls: false,
+                            hasBorders: false
 
-                    //         var text = new fabric.Text('+', {
-                    //             fontSize: 30,
-                    //             // originX: 'center',
-                    //             // originY: 'center'
-                    //         });
-                    //         var group = new fabric.Group([crashedObj, text], {
-                    //             // this: crashedObj,
-                    //             left: crashedObj.get('left'),
-                    //             top: crashedObj.get('top'),
-                    //             angle: 0,
-                    //             width: 100,
-                    //             height: 100,
-                    //             // hasBorder: true,
-                    //             // selectable: true,
-                    //             // draggable: true,
-                    //             evented: false,
-                    //         });
-                    //         canvas.remove(crashedObj)
-                    //         canvas.add(group);
-                    //     }
+
+                            // evented: false,
+                        });
+                        group.addWithUpdate(crashedObj)
+                        canvas.remove(crashedObj)
+                        canvas.remove(canvas.getItemByName('plus'))
+                        canvas.add(group);
+                    }
                 }
             }
         }
@@ -277,8 +291,11 @@
         }
 
         function restorePosition(obj) {
-            obj.left = obj.customProp.originalX;
-            obj.top = obj.customProp.originalY;
+            if (obj.customProp) {
+
+                obj.left = obj.customProp.originalX;
+                obj.top = obj.customProp.originalY;
+            }
             // obj.image.src = obj.initialImage
         }
 
